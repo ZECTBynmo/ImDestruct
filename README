@@ -1,0 +1,6 @@
+ImDestruct is a Qt-based command line utility. It attempts to break up images (PNG only for now) and vectorize simple parts to achieve smaller file sizes. The end result is an vector image (SVG only for now) with both drawing/path instructions and bitmap images.
+
+Usage:
+
+	ImDestruct.exe inputFile.png outputFileName.svg
+	
