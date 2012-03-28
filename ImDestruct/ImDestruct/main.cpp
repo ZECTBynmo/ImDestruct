@@ -2,6 +2,8 @@
 #include <QtCore/QCoreApplication>
 #include "PNGHandler.h"
 #include "qstringlist.h"
+#include "ImageDestructor.h"
+#include "SVGHandler.h"
 
 int main(int argc, char *argv[])
 {
@@ -13,8 +15,10 @@ int main(int argc, char *argv[])
 	// If we weren't passed any extra arguments, just return and don't run the program
 	if( strArgs.size() < 3 ) return 0;
 	
-	// Create our PNG handler
+	// Create our image handlers and destructor
 	PNGHandler* pPNGHandler= new PNGHandler();
+	SVGHandler* pSVGHandler= new SVGHandler();
+	ImageDestructor* pDestructor= new ImageDestructor();
 	
 	// Open an the imag
 	PNGImage image= pPNGHandler->OpenPNGFile( strArgs[1] );
