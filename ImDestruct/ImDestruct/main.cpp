@@ -23,6 +23,8 @@ int main(int argc, char *argv[])
 	// Open an the imag
 	PNGImage image= pPNGHandler->OpenPNGFile( strArgs[1] );
 	
+	pDestructor->DestructImage( image );
+	
 	// Write the image to file
 	pPNGHandler->WritePNGFile( image, strArgs[2] );
 
