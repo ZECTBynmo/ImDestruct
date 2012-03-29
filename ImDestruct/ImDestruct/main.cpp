@@ -4,10 +4,15 @@
 #include "qstringlist.h"
 #include "ImageDestructor.h"
 #include "SVGHandler.h"
+#include "qdatetime.h"
 
 int main(int argc, char *argv[])
 {
 	QCoreApplication application(argc, argv);
+	
+	// Create and start a timer so we can measure our runtime
+	QTime timer;
+	timer.start();
 	
 	// Get our application's arguments
 	QStringList strArgs= application.arguments();
@@ -27,6 +32,8 @@ int main(int argc, char *argv[])
 	
 	// Write the image to file
 	pPNGHandler->WritePNGFile( image, strArgs[2] );
+	
+	printf( "Finished processing in %d milliseconds", timer.elapsed() );
 
 	return application.exec();
 }
