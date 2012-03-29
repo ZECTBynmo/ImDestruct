@@ -274,14 +274,6 @@
 					RelativePath=".\main.cpp"
 					>
 				</File>
-				<File
-					RelativePath=".\PNGHandler.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\SVGHandler.cpp"
-					>
-				</File>
 				<Filter
 					Name="ImDestruct Headers"
 					>
@@ -289,18 +281,46 @@
 						RelativePath=".\ImageDestructor.h"
 						>
 					</File>
+				</Filter>
+				<Filter
+					Name="PNG"
+					>
 					<File
-						RelativePath=".\PNGHandler.h"
+						RelativePath=".\PNGHandler.cpp"
 						>
 					</File>
+					<Filter
+						Name="PNG Headers"
+						>
+						<File
+							RelativePath=".\PNGHandler.h"
+							>
+						</File>
+						<File
+							RelativePath=".\PNGImage.h"
+							>
+						</File>
+					</Filter>
+				</Filter>
+				<Filter
+					Name="SVG"
+					>
 					<File
-						RelativePath=".\PNGImage.h"
+						RelativePath=".\SVGHandler.cpp"
 						>
 					</File>
-					<File
-						RelativePath=".\SVGHandler.h"
+					<Filter
+						Name="SVG Headers"
 						>
-					</File>
+						<File
+							RelativePath=".\SVGHandler.h"
+							>
+						</File>
+						<File
+							RelativePath=".\SVGImage.h"
+							>
+						</File>
+					</Filter>
 				</Filter>
 			</Filter>
 		</Filter>
