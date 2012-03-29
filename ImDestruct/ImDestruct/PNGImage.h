@@ -24,6 +24,6 @@ struct PNGImage {
 
 	png_infop pInfo;	//!< A pointer to the image's info
 	int iNumPasses;		//!< Number of passes for image interlacing
-	png_bytep* pRow;	//!< A pointer to the current row
+	png_bytep* pRows;	//!< A pointer to the current row
 };
 

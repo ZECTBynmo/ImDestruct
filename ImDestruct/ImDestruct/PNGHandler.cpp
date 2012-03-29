@@ -68,11 +68,11 @@ PNGImage PNGHandler::OpenPNGFile( QString strFileName ) {
 	if (setjmp(png_jmpbuf(image.pPNG)))
 		return emptyImage;
 
-	image.pRow = (png_bytep*) malloc(sizeof(png_bytep) * image.height);
+	image.pRows = (png_bytep*) malloc(sizeof(png_bytep) * image.height);
 	for (image.yLoc=0; image.yLoc<image.height; image.yLoc++)
-		image.pRow[image.yLoc] = (png_byte*) malloc(png_get_rowbytes(image.pPNG,image.pInfo));
+		image.pRows[image.yLoc] = (png_byte*) malloc(png_get_rowbytes(image.pPNG,image.pInfo));
 
-	png_read_image(image.pPNG, image.pRow);
+	png_read_image(image.pPNG, image.pRows);
 
 	fclose(pFile);
 
@@ -120,7 +120,7 @@ void PNGHandler::WritePNGFile( PNGImage image, QString strFileName ) {
 	if (setjmp(png_jmpbuf(image.pPNG)))
 		return;
 
-	png_write_image(image.pPNG, image.pRow);
+	png_write_image(image.pPNG, image.pRows);
 
 
 	/* end write */
@@ -131,8 +131,8 @@ void PNGHandler::WritePNGFile( PNGImage image, QString strFileName ) {
 
 	/* cleanup heap allocation */
 	for (image.yLoc=0; image.yLoc<image.height; image.yLoc++)
-		free(image.pRow[image.yLoc]);
-	free(image.pRow);
+		free(image.pRows[image.yLoc]);
+	free(image.pRows);
 
 	fclose(pFile);
 } // end PNGHandler::WritePNGFile()
