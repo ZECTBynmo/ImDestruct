@@ -31,6 +31,10 @@ struct Path {
 
 // An area is a rectangle and color information
 struct Area {
+	Area() {
+		style= SolidPattern;
+	}
+
 	QRect rect;
 	bool bFill;
 	

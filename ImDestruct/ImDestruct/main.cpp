@@ -28,10 +28,10 @@ int main(int argc, char *argv[])
 	// Open the image
 	PNGImage image= pPNGHandler->OpenPNGFile( strArgs[1] );
 	
-	pDestructor->DestructImage( image );
+	SVGImage destructedImage= pDestructor->DestructImage( image, QRect( 0,0,image.width,image.height) );
 	
 	// Write the image to file
-	pPNGHandler->WritePNGFile( image, strArgs[2] );
+	pSVGHandler->WriteSVGFile( destructedImage, strArgs[2] );
 	
 	printf( "Finished processing in %d milliseconds", timer.elapsed() );
 

@@ -16,6 +16,8 @@ namespace {
 		
 		NUM_PIXEL_ATTRIBUTES
 	};
+	
+	const uint MIN_DESTRUCT_SIZE= 30; // The smallest size we're willing to try to destruct
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -27,17 +29,45 @@ ImageDestructor::ImageDestructor() {
 
 //////////////////////////////////////////////////////////////////////////////
 /*! Break the image into the smallest parts possible */
-SVGImage ImageDestructor::DestructImage( PNGImage& image ) {
-	SVGImage destructedImage;
+SVGImage ImageDestructor::DestructImage( PNGImage& image, QRect rectSearchArea, SVGImage& destructedImage ) {
 	
-	vector<QRect> rectDrawables,
-				  rectUndrawables;
+	vector<QRect> rectVertDrawables,
+				  rectVertUndrawables,
+				  rectHorDrawables,
+				  rectHorUndrawables;
 	
-	// Find our horizontal and vertical dividers
-	findHorizontalDividers( image, QRect(0, 0, image.width, image.height), rectDrawables, rectUndrawables );	
-	findVerticalDividers( image, QRect(0, 0, image.width, image.height), rectDrawables, rectUndrawables );
+	// Divide the image up into drawable and undrawable sections
+	findVerticalDividers( image, rectSearchArea, rectVertDrawables, rectVertUndrawables );
+	for( uint iUndrawable=0; iUndrawable<rectVertUndrawables.size(); ++iUndrawable ) {
+		findHorizontalDividers( image, rectVertUndrawables[iUndrawable], rectHorDrawables, rectHorUndrawables );
+	}
 	
+	// If we didn't find any dividers, we can't go any further
+	if( rectVertDrawables.size() == 0 && rectHorDrawables.size() == 0 )
+		return destructedImage;
 	
+	// Add our drawable rects to the destructed SVG image
+	for( uint iRect=0; iRect<rectHorDrawables.size(); ++iRect ) {
+		Area drawableArea;
+		drawableArea.bFill= true;
+		drawableArea.rect= rectHorDrawables[iRect];
+		
+		destructedImage.areas.push_back( drawableArea );
+	}
+	
+	for( uint iRect=0; iRect<rectVertDrawables.size(); ++iRect ) {
+		Area drawableArea;
+		drawableArea.bFill= true;
+		drawableArea.rect= rectHorDrawables[iRect];
+
+		destructedImage.areas.push_back( drawableArea );
+	}
+	
+	// Destruct the undrawable sections further
+	for( uint iRect=0; iRect<rectHorUndrawables.size(); ++iRect ) {
+		if( rectHorUndrawables[iRect].width() > MIN_DESTRUCT_SIZE || rectHorUndrawables[iRect].height() > MIN_DESTRUCT_SIZE )
+			DestructImage( image, rectHorUndrawables[iRect], destructedImage );
+	}
 	
 	return destructedImage;
 } // end ImageDestructor::DestructImage()
@@ -63,12 +93,17 @@ void ImageDestructor::findHorizontalDividers( PNGImage& image, QRect rectSearchA
 	vector<uint> uHorizontalDivisors;
 	
 	uint uNumSequentialDividers= 0;
+	
+	uint xStart= rectSearchArea.x(),
+		 yStart= rectSearchArea.y(),
+		 xEnd= rectSearchArea.right(),
+		 yEnd= rectSearchArea.bottom();
 
 	// Loop through every row and check for horizontal divisors
-	for( uint yLoc=0; yLoc<image.height; yLoc++ ) {
+	for( uint yLoc=yStart; yLoc<yEnd; yLoc++ ) {
 		bool bHorizontalDivisor= true;
 		png_byte* row= image.pRows[yLoc];
-		for ( uint xLoc=1; xLoc<image.width; xLoc++) {
+		for ( uint xLoc=xStart+1; xLoc<xEnd; xLoc++) {
 			png_byte* pPixel= &( row[xLoc*4] ),
 				* pLastPixel= &( row[(xLoc-1)*4] );
 
@@ -84,12 +119,41 @@ void ImageDestructor::findHorizontalDividers( PNGImage& image, QRect rectSearchA
 			uHorizontalDivisors.push_back( yLoc );
 		} else {
 			if( uNumSequentialDividers > 0 ) {
-				rectDrawables.push_back( QRect(0, yLoc-uNumSequentialDividers, rectSearchArea.width(), uNumSequentialDividers) );
+				rectDrawables.push_back( QRect(xStart, yLoc-uNumSequentialDividers, rectSearchArea.width(), uNumSequentialDividers) );
 			}
 			uNumSequentialDividers= 0;
 		}
 	} // end for each y
+	
+	// If we got here with some sequential dividers left, that means we got all the way to the bottom with the sequential chunk
+	if( uNumSequentialDividers > 0 ) {
+		rectDrawables.push_back( QRect(xStart, rectSearchArea.height()-uNumSequentialDividers, rectSearchArea.width(), uNumSequentialDividers) );
+	}
+	
+	// At this point we should have found all the drawable rectangles
+	// Get out if there's only one drawable rect and it takes up the whole screen, or there's nothing drawable
+	if( rectDrawables.size() == 1 && rectDrawables[0] == rectSearchArea )
+		return;
+	else if( rectDrawables.size() == 0 ) {
+		rectUndrawables.push_back( rectSearchArea );
+		return;
+	}
 
+	// Add the remaining parts of the image to the undrawable rects
+	for( uint iRect=0; iRect<=rectDrawables.size(); ++iRect ) {		
+		QRect undrawableRect;
+
+		if( iRect == rectDrawables.size() ) {
+			undrawableRect= QRect( 0, rectDrawables[iRect-1].bottom(), rectSearchArea.width(), rectSearchArea.height()-rectDrawables[iRect-1].bottom() );
+		} else if( iRect == 0 ) {
+			undrawableRect= QRect( 0, 0, rectSearchArea.width(), rectDrawables[iRect].y() ); 
+		} else {
+			undrawableRect= QRect( 0, rectDrawables[iRect-1].bottom(), rectSearchArea.width(), rectDrawables[iRect].y()-rectDrawables[iRect-1].bottom() ); 
+		}
+
+		if( undrawableRect.bottom() != undrawableRect.top() )
+			rectUndrawables.push_back( undrawableRect );
+	} // end for each drawable rect
 } // end ImageDestructor::findHorizontalDividers()
 
 
@@ -100,11 +164,16 @@ void ImageDestructor::findVerticalDividers( PNGImage& image, QRect rectSearchAre
 	
 	uint uNumSequentialDividers= 0;
 	
+	uint xStart= rectSearchArea.x(),
+		 yStart= rectSearchArea.y(),
+		 xEnd= rectSearchArea.right(),
+		 yEnd= rectSearchArea.bottom();
+	
 	// Loop through every column and check for veritcal divisors
-	for( uint xLoc= 0; xLoc<image.width; ++xLoc ) {
+	for( uint xLoc=xStart; xLoc<xEnd; ++xLoc ) {
 		bool bVerticalDivisor= true;
 
-		for( uint yLoc=1; yLoc<image.height; ++yLoc ) {
+		for( uint yLoc=yStart+1; yLoc<yEnd; ++yLoc ) {
 			png_byte* pPixel= &( image.pRows[yLoc][xLoc*4] ),
 				* pLastPixel= &( image.pRows[yLoc-1][xLoc*4] );
 
@@ -127,25 +196,33 @@ void ImageDestructor::findVerticalDividers( PNGImage& image, QRect rectSearchAre
 		}
 	} // end for each x
 	
-	// At this point we should have found all the drawable rectangles when looking vertically
-	// Add the rest of the image to the undrawables
-	for( uint iRect=0; iRect<rectDrawables.size(); ++iRect ) {
-		uint xUndrawableStart= 0;
-		
-		//if( rectUndrawables.size() == 0 && rectDrawables[iRect].x() != 0 )
-			//xUndrawableStart
-		
+	// If we got here with some sequential dividers left, that means we got all the way to the bottom with the sequential chunk
+	if( uNumSequentialDividers > 0 ) {
+		rectDrawables.push_back( QRect(xStart, rectSearchArea.width()-uNumSequentialDividers, uNumSequentialDividers, rectSearchArea.height()) );
+	}
 	
-		if( rectDrawables[iRect].x() == 0 ) {
-			continue;
+	// At this point we should have found all the drawable rectangles when looking vertically
+	// Get out if there's only one drawable rect and it takes up the whole screen, or there's nothing drawable
+	if( rectDrawables.size() == 1 && rectDrawables[0] == rectSearchArea )
+		return;
+	else if( rectDrawables.size() == 0 ) {
+		rectUndrawables.push_back( rectSearchArea );
+		return;
+	}
+	
+	// Add the remaining parts of the image to the undrawable rects
+	for( uint iRect=0; iRect<=rectDrawables.size(); ++iRect ) {		
+		QRect undrawableRect;
+		
+		if( iRect == rectDrawables.size() ) {
+			undrawableRect= QRect( rectDrawables[iRect-1].right(), 0, rectSearchArea.width()-rectDrawables[iRect-1].right(), rectSearchArea.height() );
+		} else if( iRect == 0 ) {
+			undrawableRect= QRect( 0, 0, rectDrawables[iRect].x(), rectSearchArea.height() ); 
 		} else {
-			if( rectDrawables.size() == iRect + 1 ) {
-				QRect undrawableRect= QRect( 0, 0, rectDrawables[iRect].x(), rectSearchArea.height() );
-				rectUndrawables.push_back( undrawableRect );
-			} else {
-				QRect undrawableRect= QRect( 0, 0, rectDrawables[iRect+1].x() - rectDrawables[iRect].x(), rectSearchArea.height() );
-				rectUndrawables.push_back( undrawableRect );
-			}	// end if this isn't our last rect
-		} // end if this rect doesn't start at 0
+			undrawableRect= QRect( rectDrawables[iRect-1].right(), 0, rectDrawables[iRect].x()-rectDrawables[iRect-1].right(), rectSearchArea.height() ); 
+		}
+		
+		if( undrawableRect.width() != 0 )
+			rectUndrawables.push_back( undrawableRect );
 	} // end for each drawable rect
 } // end ImageDestructor::findVerticalDividers()

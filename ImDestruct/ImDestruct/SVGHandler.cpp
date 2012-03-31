@@ -17,21 +17,16 @@ SVGHandler::SVGHandler() {
 	
 	// Create our path painter
 	m_pPathPainter= new QPainter();
-
-// 	QSvgGenerator generator;
-// 	generator.setFileName("C:/tested.svg");
-// 	generator.setSize(QSize(200, 200));
-// 	generator.setViewBox(QRect(0, 0, 200, 200));
-// 	generator.setTitle("SVG Output Test");
-// 	generator.setDescription("A test of SVG output");
-		
-// 	QPainter painter;
-// 	painter.begin(&generator);
 } // end SVGHandler::SVGHandler()
 
 
 //////////////////////////////////////////////////////////////////////////////
 /*! Writes a SVG image to file */
 void SVGHandler::WriteSVGFile( SVGImage image, QString strFileName ) {
+	m_pGenerator->setFileName( strFileName );
+	m_pGenerator->setTitle( "please work" );
 	
+	m_pPathPainter->begin( m_pGenerator );
+	image.PaintSVG( *m_pPathPainter );
+	m_pPathPainter->end();
 } // end SVGHandler::WriteSVGFile()

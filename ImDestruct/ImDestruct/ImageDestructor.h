@@ -14,7 +14,7 @@ public:
 	ImageDestructor();	//!< Initialize
 	
 	//! Break the image into the smallest parts possible
-	SVGImage DestructImage( PNGImage& image );
+	SVGImage DestructImage( PNGImage& image, QRect rectSearchArea, SVGImage& destructedImage= SVGImage() );
 	
 private:
 	//! Returns whether the given pixels are identical in RGBA

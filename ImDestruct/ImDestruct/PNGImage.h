@@ -5,6 +5,7 @@
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "lpng159/png.h"
+#include "qrect.h"
 
 struct PNGImage {
 	//! Constructor
@@ -25,5 +26,12 @@ struct PNGImage {
 	png_infop pInfo;	//!< A pointer to the image's info
 	int iNumPasses;		//!< Number of passes for image interlacing
 	png_bytep* pRows;	//!< A pointer to the current row
+	
+	// Copy an area of the original image into a new image
+	void CopyRectToPtr( QRect areaToCopy, PNGImage& target ) {
+		target.pRows = (png_bytep*) malloc(sizeof(png_bytep) * target.height);
+		for (target.yLoc=0; target.yLoc<target.height; target.yLoc++)
+			target.pRows[target.yLoc] = (png_byte*) malloc(png_get_rowbytes(target.pPNG,target.pInfo));
+	}
 };
 
