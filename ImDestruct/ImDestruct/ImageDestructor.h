@@ -19,6 +19,14 @@ public:
 private:
 	//! Returns whether the given pixels are identical in RGBA
 	bool isPixelIdentical( png_byte* pFirstPixel, png_byte* pSecondPixel );
+	
+	//! Finds a list of horizontal dividers
+	void findHorizontalDividers( PNGImage& image, QRect rectSearchArea, vector<QRect>& rectDrawables, vector<QRect>& rectUndrawables );
+	//! Finds a list of vertical dividers
+	void findVerticalDividers( PNGImage& image, QRect rectSearchArea, vector<QRect>& rectDrawables, vector<QRect>& rectUndrawables );
+	
+	//! Separates an image up into it's component parts
+	//vector<PNGImage>& separateImage( PNGImage& originalImage, SVGImage& svgImage, vector<uint>& uHorizontalDivisors, vector<uint>& uVerticalDivisors );
 }; // end class ImageDestructor
 
 

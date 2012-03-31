@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
 	SVGHandler* pSVGHandler= new SVGHandler();
 	ImageDestructor* pDestructor= new ImageDestructor();
 	
-	// Open an the imag
+	// Open the image
 	PNGImage image= pPNGHandler->OpenPNGFile( strArgs[1] );
 	
 	pDestructor->DestructImage( image );
