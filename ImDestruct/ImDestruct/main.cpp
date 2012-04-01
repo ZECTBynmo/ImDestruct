@@ -28,7 +28,8 @@ int main(int argc, char *argv[])
 	// Open the image
 	PNGImage image= pPNGHandler->OpenPNGFile( strArgs[1] );
 	
-	SVGImage destructedImage= pDestructor->DestructImage( image, QRect( 0,0,image.width,image.height) );
+	SVGImage destructedImage;
+	pDestructor->DestructImage( image, QRect( 0,0,image.width,image.height), destructedImage );
 	
 	// Write the image to file
 	pSVGHandler->WriteSVGFile( destructedImage, strArgs[2] );

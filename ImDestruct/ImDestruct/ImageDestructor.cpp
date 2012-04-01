@@ -29,7 +29,7 @@ ImageDestructor::ImageDestructor() {
 
 //////////////////////////////////////////////////////////////////////////////
 /*! Break the image into the smallest parts possible */
-SVGImage ImageDestructor::DestructImage( PNGImage& image, QRect rectSearchArea, SVGImage& destructedImage ) {
+void ImageDestructor::DestructImage( PNGImage& image, QRect rectSearchArea, SVGImage& destructedImage ) {
 	
 	vector<QRect> rectVertDrawables,
 				  rectVertUndrawables,
@@ -44,7 +44,7 @@ SVGImage ImageDestructor::DestructImage( PNGImage& image, QRect rectSearchArea, 
 	
 	// If we didn't find any dividers, we can't go any further
 	if( rectVertDrawables.size() == 0 && rectHorDrawables.size() == 0 )
-		return destructedImage;
+		return;
 	
 	// Add our drawable rects to the destructed SVG image
 	for( uint iRect=0; iRect<rectHorDrawables.size(); ++iRect ) {
@@ -58,7 +58,10 @@ SVGImage ImageDestructor::DestructImage( PNGImage& image, QRect rectSearchArea, 
 	for( uint iRect=0; iRect<rectVertDrawables.size(); ++iRect ) {
 		Area drawableArea;
 		drawableArea.bFill= true;
-		drawableArea.rect= rectHorDrawables[iRect];
+		drawableArea.rect= QRect( rectVertDrawables[iRect].x() + rectSearchArea.x(), 
+								  rectVertDrawables[iRect].y() + rectSearchArea.y(), 
+								  rectVertDrawables[iRect].width(), 
+								  rectVertDrawables[iRect].height() );
 
 		destructedImage.areas.push_back( drawableArea );
 	}
@@ -69,7 +72,7 @@ SVGImage ImageDestructor::DestructImage( PNGImage& image, QRect rectSearchArea, 
 			DestructImage( image, rectHorUndrawables[iRect], destructedImage );
 	}
 	
-	return destructedImage;
+	return;
 } // end ImageDestructor::DestructImage()
 
 
@@ -77,6 +80,10 @@ SVGImage ImageDestructor::DestructImage( PNGImage& image, QRect rectSearchArea, 
 /*! Returns whether the given pixels are identical in RGBA */
 bool ImageDestructor::isPixelIdentical( png_byte* pFirstPixel, png_byte* pSecondPixel ) {
 	bool bIdentical= true;
+	
+	// If both pixels are transparent, they're effectively the same
+	if( pFirstPixel[ALPHA] == 0 && pSecondPixel[ALPHA] == 0 ) 
+		return true;
 	
 	for( uint iAttribute=0; iAttribute<NUM_PIXEL_ATTRIBUTES; ++iAttribute ) {
 		if( pFirstPixel[iAttribute] != pSecondPixel[iAttribute] )
@@ -144,14 +151,14 @@ void ImageDestructor::findHorizontalDividers( PNGImage& image, QRect rectSearchA
 		QRect undrawableRect;
 
 		if( iRect == rectDrawables.size() ) {
-			undrawableRect= QRect( 0, rectDrawables[iRect-1].bottom(), rectSearchArea.width(), rectSearchArea.height()-rectDrawables[iRect-1].bottom() );
+			undrawableRect= QRect( 0, rectDrawables[iRect-1].bottom(), rectSearchArea.right(), rectSearchArea.height()-rectDrawables[iRect-1].bottom() );
 		} else if( iRect == 0 ) {
-			undrawableRect= QRect( 0, 0, rectSearchArea.width(), rectDrawables[iRect].y() ); 
+			undrawableRect= QRect( 0, 0, rectSearchArea.right(), rectDrawables[iRect].y() ); 
 		} else {
-			undrawableRect= QRect( 0, rectDrawables[iRect-1].bottom(), rectSearchArea.width(), rectDrawables[iRect].y()-rectDrawables[iRect-1].bottom() ); 
+			undrawableRect= QRect( 0, rectDrawables[iRect-1].bottom(), rectSearchArea.right(), rectDrawables[iRect].y()-rectDrawables[iRect-1].bottom() ); 
 		}
 
-		if( undrawableRect.bottom() != undrawableRect.top() )
+		if( undrawableRect.height() > 0 && undrawableRect.isValid() )
 			rectUndrawables.push_back( undrawableRect );
 	} // end for each drawable rect
 } // end ImageDestructor::findHorizontalDividers()
@@ -215,14 +222,14 @@ void ImageDestructor::findVerticalDividers( PNGImage& image, QRect rectSearchAre
 		QRect undrawableRect;
 		
 		if( iRect == rectDrawables.size() ) {
-			undrawableRect= QRect( rectDrawables[iRect-1].right(), 0, rectSearchArea.width()-rectDrawables[iRect-1].right(), rectSearchArea.height() );
+			undrawableRect= QRect( rectDrawables[iRect-1].right(), 0, rectSearchArea.right()-rectDrawables[iRect-1].right(), rectSearchArea.height() );
 		} else if( iRect == 0 ) {
-			undrawableRect= QRect( 0, 0, rectDrawables[iRect].x(), rectSearchArea.height() ); 
+			undrawableRect= QRect( 0, 0, rectDrawables[iRect].x(), rectSearchArea.y() ); 
 		} else {
 			undrawableRect= QRect( rectDrawables[iRect-1].right(), 0, rectDrawables[iRect].x()-rectDrawables[iRect-1].right(), rectSearchArea.height() ); 
 		}
 		
-		if( undrawableRect.width() != 0 )
+		if( undrawableRect.width() > 0 && undrawableRect.isValid() )
 			rectUndrawables.push_back( undrawableRect );
 	} // end for each drawable rect
 } // end ImageDestructor::findVerticalDividers()
