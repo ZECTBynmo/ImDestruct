@@ -14,7 +14,7 @@ public:
 	ImageDestructor();	//!< Initialize
 	
 	//! Break the image into the smallest parts possible
-	void DestructImage( PNGImage& image, QRect rectSearchArea, SVGImage& destructedImage= SVGImage() );
+	void DestructImage( PNGImage& image, QRect rectSearchArea, SVGImage& destructedImage= SVGImage(), uint iRecursionLevel= 0 );
 	
 private:
 	//! Returns whether the given pixels are identical in RGBA

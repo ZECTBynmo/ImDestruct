@@ -18,7 +18,8 @@ namespace {
 	};
 	
 	const uint MIN_DESTRUCT_SIZE= 30, // The smallest size we're willing to try to destruct
-			   PIXEL_SIMILARITY_TOLERANCE= 10;
+			   PIXEL_SIMILARITY_TOLERANCE= 10,
+			   RECURSION_LIMIT= 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -30,7 +31,7 @@ ImageDestructor::ImageDestructor() {
 
 //////////////////////////////////////////////////////////////////////////////
 /*! Break the image into the smallest parts possible */
-void ImageDestructor::DestructImage( PNGImage& image, QRect rectSearchArea, SVGImage& destructedImage ) {
+void ImageDestructor::DestructImage( PNGImage& image, QRect rectSearchArea, SVGImage& destructedImage, uint iRecursionLevel ) {
 	
 	vector<QRect> rectVertDrawables,
 				  rectVertUndrawables,
@@ -80,8 +81,13 @@ void ImageDestructor::DestructImage( PNGImage& image, QRect rectSearchArea, SVGI
 	
 	// Destruct the undrawable sections further
 	for( uint iRect=0; iRect<rectHorUndrawables.size(); ++iRect ) {
-		if( rectHorUndrawables[iRect].width() > MIN_DESTRUCT_SIZE || rectHorUndrawables[iRect].height() > MIN_DESTRUCT_SIZE )
-			DestructImage( image, rectHorUndrawables[iRect], destructedImage );
+		iRecursionLevel++;
+		
+		if( iRecursionLevel > RECURSION_LIMIT ) break;
+		
+		if( rectHorUndrawables[iRect].width() > MIN_DESTRUCT_SIZE || rectHorUndrawables[iRect].height() > MIN_DESTRUCT_SIZE ) {
+			DestructImage( image, rectHorUndrawables[iRect], destructedImage, iRecursionLevel );
+		}
 	}
 	
 	return;
