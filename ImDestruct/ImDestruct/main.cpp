@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
 	QStringList strArgs= application.arguments();
 	
 	// If we weren't passed any extra arguments, just return and don't run the program
-	if( strArgs.size() < 3 ) return 0;
+	if( strArgs.size() < 3 ) return application.exec();
 	
 	// Create our image handlers and destructor
 	PNGHandler* pPNGHandler= new PNGHandler();
@@ -26,7 +26,12 @@ int main(int argc, char *argv[])
 	ImageDestructor* pDestructor= new ImageDestructor();
 	
 	// Open the image
-	PNGImage image= pPNGHandler->OpenPNGFile( strArgs[1] );
+	bool bOK= true;
+	PNGImage image= pPNGHandler->OpenPNGFile( strArgs[1], bOK );
+	if( !bOK ) {
+		printf( "An error occurred loading " + strArgs[1].toLatin1() );
+		return application.exec();;
+	}
 	
 	SVGImage destructedImage;
 	pDestructor->DestructImage( image, QRect( 0,0,image.width,image.height), destructedImage );

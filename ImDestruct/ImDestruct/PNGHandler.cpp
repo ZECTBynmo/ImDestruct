@@ -22,7 +22,7 @@ PNGHandler::PNGHandler() {
 
 //////////////////////////////////////////////////////////////////////////////
 /*! Open a PNG file and returns its contents */
-PNGImage PNGHandler::OpenPNGFile( QString strFileName ) {
+PNGImage PNGHandler::OpenPNGFile( QString strFileName, bool& bOK ) {
 	PNGImage image,			// Image to be returned if successful
 			 emptyImage;	// Uninitialized image returned if reading fails
 
@@ -30,25 +30,33 @@ PNGImage PNGHandler::OpenPNGFile( QString strFileName ) {
 
 	// open file and test for it being a png
 	FILE* pFile= fopen( strFileName.toLatin1(), "rb" );
-	if (!pFile)
+	if (!pFile) {
+		bOK= false;
 		return emptyImage;
+	}
+	
 	fread(header, 1, 8, pFile);
 // 	if (png_sig_cmp(header, 0, 8))
 // 		return emptyImage;
 
-
 	// initialize stuff
 	image.pPNG = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 
-	if (!image.pPNG)
+	if ( !image.pPNG ) {
+		bOK= false;
 		return emptyImage;
+	}
 
 	image.pInfo = png_create_info_struct(image.pPNG);
-	if (!image.pInfo)
+	if (!image.pInfo) {
+		bOK= false;
 		return emptyImage;
+	}
 
-	if (setjmp(png_jmpbuf(image.pPNG)))
+	if ( setjmp(png_jmpbuf(image.pPNG)) ) {
+		bOK= false;
 		return emptyImage;
+	}
 
 	png_init_io(image.pPNG, pFile);
 	png_set_sig_bytes(image.pPNG, 8);
@@ -65,8 +73,16 @@ PNGImage PNGHandler::OpenPNGFile( QString strFileName ) {
 
 
 	/* read file */
-	if (setjmp(png_jmpbuf(image.pPNG)))
+	if ( setjmp(png_jmpbuf(image.pPNG)) ) {
+		bOK= false;
 		return emptyImage;
+	}
+	
+	// Make sure we're RGBA
+	if (png_get_color_type(image.pPNG, image.pInfo) != PNG_COLOR_TYPE_RGBA) {
+		bOK= false;
+		return emptyImage;
+	}
 
 	image.pRows = (png_bytep*) malloc(sizeof(png_bytep) * image.height);
 	for (image.yLoc=0; image.yLoc<image.height; image.yLoc++)

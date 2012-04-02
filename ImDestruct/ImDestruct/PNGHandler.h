@@ -15,7 +15,7 @@ public:
 	PNGHandler();	//!< Initialize
 	
 	//! Open a PNG file and returns its contents
-	PNGImage OpenPNGFile( QString strFileName );
+	PNGImage OpenPNGFile( QString strFileName, bool& bOK );
 	
 	//! Writes a PNG image to file
 	void WritePNGFile( PNGImage image, QString strFileName );
